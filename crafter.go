@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 )
 
 func responseGet(w http.ResponseWriter, r *http.Request){
@@ -25,10 +26,10 @@ func responseGet(w http.ResponseWriter, r *http.Request){
 
 func main() {
 
-	bearer := os.Args[1];
-	item := os.Args[2];
+	bearer := "Bearer " + os.Args[1];
+	item, err := strconv.Atoi(os.Args[2]);
 
-	requestUrl := "https://api.guildwars2.com/v2/items/" + item;
+	requestUrl := "https://api.guildwars2.com/v2/account/materials";
 	fmt.Println("Request url = " + requestUrl);
     req, err := http.NewRequest("GET", requestUrl, nil)
 	req.Header.Add("Authorization", bearer);
@@ -36,7 +37,7 @@ func main() {
 	client := &http.Client{}
     resp, err := client.Do(req)
 
-	var respDeserialized Item
+	var respDeserialized materialStorage
 
     if err != nil {
         fmt.Print(err.Error())
@@ -51,10 +52,15 @@ func main() {
 
 	json.Unmarshal(empResp, &respDeserialized)
 
+	
     if err != nil {
         log.Fatal(err)
     }
 
-	fmt.Println((respDeserialized.Rarity))
+	for i:= 0; i < len(respDeserialized); i++{
+		if(respDeserialized[i].ID == item){
+			fmt.Println(respDeserialized[i].Count)
+		}
+	}
 
 }
