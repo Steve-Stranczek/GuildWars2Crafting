@@ -7,30 +7,42 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 )
 
-func responseGet(w http.ResponseWriter, r *http.Request){
-
-	var resp Item
-
-	err := json.NewDecoder(r.Body).Decode(&resp)
-
-	if err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
-
-	fmt.Fprintf(w,"Repsponse: %+v", resp)
+type itemRequest struct {
+	Bearer string `json:"bearer"`
+	Item int `json:"item"`
 }
 
-func main() {
+func getItemCount(w http.ResponseWriter, req *http.Request) {
 
-	bearer := "Bearer " + os.Args[1];
-	item, err := strconv.Atoi(os.Args[2]);
+	if req.Body == http.NoBody {
+		http.Error(w, "Please send a request body", 400)
+		return
+	} 
+	
+	var itemreq itemRequest
+
+	err := json.NewDecoder(req.Body).Decode(&itemreq)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	fmt.Printf("bearer: %s\n", itemreq.Bearer)
+	fmt.Printf("item: %d\n", itemreq.Item)
+
+	countOfItem := findItem("Bearer " + itemreq.Bearer, itemreq.Item);
+	fmt.Fprintf(w, "%d", countOfItem)
+
+}
+
+func findItem(bearer string, item int) int {
+	fmt.Println("Inside findItem")
 
 	requestUrl := "https://api.guildwars2.com/v2/account/materials";
 	fmt.Println("Request url = " + requestUrl);
+
     req, err := http.NewRequest("GET", requestUrl, nil)
 	req.Header.Add("Authorization", bearer);
 
@@ -57,10 +69,25 @@ func main() {
         log.Fatal(err)
     }
 
+	itemCount := 0
+	
 	for i:= 0; i < len(respDeserialized); i++{
 		if(respDeserialized[i].ID == item){
-			fmt.Println(respDeserialized[i].Count)
+			itemCount = respDeserialized[i].Count
 		}
 	}
+
+	return itemCount
+}
+
+func main() {
+
+	http.HandleFunc("/", getItemCount)
+	err := http.ListenAndServe("localhost:12345", nil)
+	 
+	if err != nil {
+		log.Fatal("ListenAndServe: ", err)
+	}
+
 
 }
