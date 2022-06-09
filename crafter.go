@@ -9,11 +9,6 @@ import (
 	"os"
 )
 
-type itemRequest struct {
-	Bearer string `json:"bearer"`
-	Item int `json:"item"`
-}
-
 func getItemCount(w http.ResponseWriter, req *http.Request) {
 
 	if req.Body == http.NoBody {
@@ -82,7 +77,7 @@ func findItem(bearer string, item int) int {
 
 func main() {
 
-	http.HandleFunc("/", getItemCount)
+	http.HandleFunc("/getItemCount", getItemCount)
 	err := http.ListenAndServe("localhost:12345", nil)
 	 
 	if err != nil {
